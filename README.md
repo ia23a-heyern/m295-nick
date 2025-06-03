@@ -10,4 +10,5 @@ Zusammenfassung
 
 
 
-![image](https://github.com/user-attachments/assets/857e8595-94a8-44f9-af85-b9a8f2b8da79)
+![image](https://github.com/user-attachments/assets/8e8ba2e0-fc09-4b99-86d3-f0bd2e16fd0a)
+
