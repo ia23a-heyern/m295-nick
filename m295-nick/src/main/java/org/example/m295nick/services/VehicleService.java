@@ -1,6 +1,5 @@
 package org.example.m295nick.services;
 
-import lombok.RequiredArgsConstructor;
 import org.example.m295nick.models.Vehicle;
 import org.example.m295nick.repositories.VehicleRepository;
 import org.springframework.stereotype.Service;
@@ -9,10 +8,14 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
+
+    // ✅ Manueller Konstruktor (Lombok wird nicht verwendet)
+    public VehicleService(VehicleRepository vehicleRepository) {
+        this.vehicleRepository = vehicleRepository;
+    }
 
     public List<Vehicle> getAllVehicles() {
         return vehicleRepository.findAll();

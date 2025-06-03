@@ -1,6 +1,5 @@
 package org.example.m295nick.services;
 
-import lombok.RequiredArgsConstructor;
 import org.example.m295nick.models.Rental;
 import org.example.m295nick.models.Vehicle;
 import org.example.m295nick.repositories.RentalRepository;
@@ -11,11 +10,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class RentalService {
 
     private final RentalRepository rentalRepository;
     private final VehicleRepository vehicleRepository;
+
+    // 👇 Manueller Konstruktor statt @RequiredArgsConstructor
+    public RentalService(RentalRepository rentalRepository, VehicleRepository vehicleRepository) {
+        this.rentalRepository = rentalRepository;
+        this.vehicleRepository = vehicleRepository;
+    }
 
     public List<Rental> getAllRentals() {
         return rentalRepository.findAll();
