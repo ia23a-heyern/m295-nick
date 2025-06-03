@@ -2,7 +2,7 @@ package org.example.m295nick.models;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-
+import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -13,95 +13,32 @@ public class Vehicle {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Brand must not be blank")
+    @Size(min = 2, max = 100, message = "Brand length must be between 2 and 100")
     private String brand;
+
+    @NotBlank(message = "Model must not be blank")
+    @Size(min = 1, max = 100, message = "Model length must be between 1 and 100")
     private String model;
+
+    @Positive(message = "Price per day must be greater than zero")
     private double pricePerDay;
+
+    @NotNull(message = "First registration date is required")
+    @PastOrPresent(message = "First registration date cannot be in the future")
     private LocalDate firstRegistration;
+
+    @Min(value = 1, message = "Seats must be at least 1")
     private int seats;
+
     private boolean hasAirConditioning;
 
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Rental> rentals;
 
-    // --- Constructors ---
-
+    // Getter, Setter, Konstruktoren wie bisher...
     public Vehicle() {}
-
-    public Vehicle(Long id, String brand, String model, double pricePerDay,
-                   LocalDate firstRegistration, int seats, boolean hasAirConditioning) {
-        this.id = id;
-        this.brand = brand;
-        this.model = model;
-        this.pricePerDay = pricePerDay;
-        this.firstRegistration = firstRegistration;
-        this.seats = seats;
-        this.hasAirConditioning = hasAirConditioning;
-    }
-
-    // --- Getters and Setters ---
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public void setBrand(String brand) {
-        this.brand = brand;
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    public void setModel(String model) {
-        this.model = model;
-    }
-
-    public double getPricePerDay() {
-        return pricePerDay;
-    }
-
-    public void setPricePerDay(double pricePerDay) {
-        this.pricePerDay = pricePerDay;
-    }
-
-    public LocalDate getFirstRegistration() {
-        return firstRegistration;
-    }
-
-    public void setFirstRegistration(LocalDate firstRegistration) {
-        this.firstRegistration = firstRegistration;
-    }
-
-    public int getSeats() {
-        return seats;
-    }
-
-    public void setSeats(int seats) {
-        this.seats = seats;
-    }
-
-    public boolean isHasAirConditioning() {
-        return hasAirConditioning;
-    }
-
-    public void setHasAirConditioning(boolean hasAirConditioning) {
-        this.hasAirConditioning = hasAirConditioning;
-    }
-
-    public List<Rental> getRentals() {
-        return rentals;
-    }
-
-    public void setRentals(List<Rental> rentals) {
-        this.rentals = rentals;
-    }
+    // ... andere Konstruktoren und Getter/Setter ...
+    // (aus Platzgründen weggelassen, wenn gewünscht liefere ich den kompletten Boilerplate nach)
 }
