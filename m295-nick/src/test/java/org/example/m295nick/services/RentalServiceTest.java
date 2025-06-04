@@ -8,19 +8,20 @@ import org.example.m295nick.repositories.VehicleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class RentalServiceTest {
@@ -35,13 +36,14 @@ class RentalServiceTest {
     private RentalServiceImpl rentalService;
 
     private Vehicle sampleVehicle;
+    private Vehicle anotherVehicle;
     private Rental sampleRental;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        // Muster‐Fahrzeug für Tests
+        // Beispiel‐Fahrzeug
         sampleVehicle = new Vehicle();
         sampleVehicle.setId(1L);
         sampleVehicle.setBrand("VW");
@@ -51,14 +53,22 @@ class RentalServiceTest {
         sampleVehicle.setPricePerDay(new BigDecimal("100.00"));
         sampleVehicle.setSeats(5);
 
-        // Muster‐Miete für Tests
+        anotherVehicle = new Vehicle();
+        anotherVehicle.setId(2L);
+        anotherVehicle.setBrand("BMW");
+        anotherVehicle.setModel("X3");
+        anotherVehicle.setFirstRegistration(LocalDate.of(2021, 3, 15));
+        anotherVehicle.setHasAirConditioning(true);
+        anotherVehicle.setPricePerDay(new BigDecimal("150.00"));
+        anotherVehicle.setSeats(5);
+
+        // Beispiel‐Miete
         sampleRental = new Rental();
         sampleRental.setId(1L);
         sampleRental.setCustomer("Max Mustermann");
         sampleRental.setStartDate(LocalDate.of(2025, 6, 1));
         sampleRental.setEndDate(LocalDate.of(2025, 6, 3));
         sampleRental.setVehicle(sampleVehicle);
-        // totalCost wird in create() oder update() gesetzt, deshalb kann es hier null bleiben
     }
 
     @Test
@@ -112,7 +122,7 @@ class RentalServiceTest {
     }
 
     @Test
-    @DisplayName("getByStartDateAfter filtert korrekt")
+    @DisplayName("getByStartDateAfter filtert korrekt mit Ergebnissen")
     void whenGetByStartDateAfter_thenReturnFilteredList() {
         Rental r1 = new Rental();
         r1.setId(2L);
@@ -131,7 +141,18 @@ class RentalServiceTest {
     }
 
     @Test
-    @DisplayName("getByEndDateBefore filtert korrekt")
+    @DisplayName("getByStartDateAfter filtert korrekt ohne Ergebnisse")
+    void whenGetByStartDateAfter_thenReturnEmptyList() {
+        when(rentalRepository.findByStartDateAfter(LocalDate.of(2025, 12, 31)))
+                .thenReturn(Collections.emptyList());
+
+        List<Rental> result = rentalService.getByStartDateAfter(LocalDate.of(2025, 12, 31));
+        assertThat(result).isEmpty();
+        verify(rentalRepository, times(1)).findByStartDateAfter(LocalDate.of(2025, 12, 31));
+    }
+
+    @Test
+    @DisplayName("getByEndDateBefore filtert korrekt mit Ergebnissen")
     void whenGetByEndDateBefore_thenReturnFilteredList() {
         Rental r2 = new Rental();
         r2.setId(3L);
@@ -150,15 +171,26 @@ class RentalServiceTest {
     }
 
     @Test
-    @DisplayName("create valid Rental berechnet totalCost und speichert")
-    void whenCreate_validRental_thenCalculateTotalCostAndSave() {
+    @DisplayName("getByEndDateBefore filtert korrekt ohne Ergebnisse")
+    void whenGetByEndDateBefore_thenReturnEmptyList() {
+        when(rentalRepository.findByEndDateBefore(LocalDate.of(2000, 1, 1)))
+                .thenReturn(Collections.emptyList());
+
+        List<Rental> result = rentalService.getByEndDateBefore(LocalDate.of(2000, 1, 1));
+        assertThat(result).isEmpty();
+        verify(rentalRepository, times(1)).findByEndDateBefore(LocalDate.of(2000, 1, 1));
+    }
+
+    @Test
+    @DisplayName("create valid Rental berechnet totalCost für mehrere Tage und speichert")
+    void whenCreate_validRentalMultipleDays_thenCalculateTotalCostAndSave() {
         when(vehicleRepository.findById(1L)).thenReturn(Optional.of(sampleVehicle));
         when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Rental toSave = new Rental();
         toSave.setCustomer("Anna");
         toSave.setStartDate(LocalDate.of(2025, 7, 1));
-        toSave.setEndDate(LocalDate.of(2025, 7, 4)); // 4 Tage inklusive
+        toSave.setEndDate(LocalDate.of(2025, 7, 4)); // 4 Tage
         toSave.setVehicle(sampleVehicle);
 
         Rental saved = rentalService.create(toSave);
@@ -173,14 +205,34 @@ class RentalServiceTest {
     }
 
     @Test
+    @DisplayName("create valid Rental berechnet totalCost für einen Tag und speichert")
+    void whenCreate_validRentalSingleDay_thenCalculateTotalCostAndSave() {
+        when(vehicleRepository.findById(1L)).thenReturn(Optional.of(sampleVehicle));
+        when(rentalRepository.save(any(Rental.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Rental toSave = new Rental();
+        toSave.setCustomer("Ben");
+        toSave.setStartDate(LocalDate.of(2025, 8, 15));
+        toSave.setEndDate(LocalDate.of(2025, 8, 15)); // 1 Tag
+        toSave.setVehicle(sampleVehicle);
+
+        Rental saved = rentalService.create(toSave);
+
+        // 1 Tag * 100.00 = 100.00
+        BigDecimal expectedCost = sampleVehicle.getPricePerDay().multiply(BigDecimal.valueOf(1));
+        assertThat(saved.getTotalCost()).isEqualByComparingTo(expectedCost);
+        verify(rentalRepository, times(1)).save(any(Rental.class));
+    }
+
+    @Test
     @DisplayName("create Rental mit startDate > endDate wirft IllegalArgumentException")
     void whenCreate_invalidDates_thenThrowIllegalArgumentException() {
         when(vehicleRepository.findById(1L)).thenReturn(Optional.of(sampleVehicle));
 
         Rental bad = new Rental();
-        bad.setCustomer("Anna");
-        bad.setStartDate(LocalDate.of(2025, 8, 5));
-        bad.setEndDate(LocalDate.of(2025, 8, 3)); // startDate nach endDate
+        bad.setCustomer("Cara");
+        bad.setStartDate(LocalDate.of(2025, 9, 10));
+        bad.setEndDate(LocalDate.of(2025, 9, 8)); // Start > Ende
         bad.setVehicle(sampleVehicle);
 
         assertThatThrownBy(() -> rentalService.create(bad))
@@ -195,12 +247,12 @@ class RentalServiceTest {
         when(vehicleRepository.findById(99L)).thenReturn(Optional.empty());
 
         Rental r = new Rental();
-        r.setCustomer("Anna");
-        r.setStartDate(LocalDate.of(2025, 9, 1));
-        r.setEndDate(LocalDate.of(2025, 9, 2));
-        Vehicle deadRef = new Vehicle();
-        deadRef.setId(99L);
-        r.setVehicle(deadRef);
+        r.setCustomer("Dana");
+        r.setStartDate(LocalDate.of(2025, 10, 1));
+        r.setEndDate(LocalDate.of(2025, 10, 2));
+        Vehicle missing = new Vehicle();
+        missing.setId(99L);
+        r.setVehicle(missing);
 
         assertThatThrownBy(() -> rentalService.create(r))
                 .isInstanceOf(ResourceNotFoundException.class)
@@ -248,6 +300,31 @@ class RentalServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Rental");
         verify(rentalRepository, times(1)).findById(99L);
+        verifyvehicleCalledNever:
+        verify(vehicleRepository, never()).findById(anyLong());
+        verify(rentalRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("update mit nicht vorhandenem Vehicle wirft ResourceNotFoundException")
+    void whenUpdate_existingRentalVehicleNotFound_thenThrowResourceNotFoundException() {
+        when(rentalRepository.findById(1L)).thenReturn(Optional.of(sampleRental));
+        when(vehicleRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Rental updateData = new Rental();
+        updateData.setCustomer("Felix");
+        updateData.setStartDate(LocalDate.of(2025, 12, 1));
+        updateData.setEndDate(LocalDate.of(2025, 12, 2));
+        Vehicle missing = new Vehicle();
+        missing.setId(99L);
+        updateData.setVehicle(missing);
+
+        assertThatThrownBy(() -> rentalService.update(1L, updateData))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Vehicle");
+
+        verify(rentalRepository, times(1)).findById(1L);
+        verify(rentalRepository, never()).save(any());
     }
 
     @Test
@@ -276,49 +353,132 @@ class RentalServiceTest {
     @DisplayName("deleteAll ruft Repository.deleteAll auf")
     void deleteAll_callsRepositoryDeleteAll() {
         doNothing().when(rentalRepository).deleteAll();
+
         rentalService.deleteAll();
+
         verify(rentalRepository, times(1)).deleteAll();
     }
 
     @Test
-    @DisplayName("deleteByStartDateAfter filtert und löscht nur gefundene Rentals")
+    @DisplayName("deleteByStartDateAfter filtert und löscht vorhandene Rentals")
     void deleteByStartDateAfter_deletesFiltered() {
-        // Altes Rental (liegt vor 2024-06-01)
-        Rental rOld = new Rental();
-        rOld.setId(1L);
-        rOld.setCustomer("A");
-        rOld.setStartDate(LocalDate.of(2024, 1, 1));
-        rOld.setEndDate(LocalDate.of(2024, 1, 2));
-        rOld.setVehicle(sampleVehicle);
-        rOld.setTotalCost(BigDecimal.ZERO);
+        Rental old = new Rental();
+        old.setId(1L);
+        old.setCustomer("A");
+        old.setStartDate(LocalDate.of(2024, 1, 1));
+        old.setEndDate(LocalDate.of(2024, 1, 2));
+        old.setVehicle(sampleVehicle);
+        old.setTotalCost(BigDecimal.ZERO);
 
-        // Neues Rental (liegt nach 2024-06-01)
-        Rental rNew = new Rental();
-        rNew.setId(2L);
-        rNew.setCustomer("B");
-        rNew.setStartDate(LocalDate.of(2025, 1, 1));
-        rNew.setEndDate(LocalDate.of(2025, 1, 2));
-        rNew.setVehicle(sampleVehicle);
-        rNew.setTotalCost(BigDecimal.ZERO);
+        Rental future = new Rental();
+        future.setId(2L);
+        future.setCustomer("B");
+        future.setStartDate(LocalDate.of(2025, 1, 1));
+        future.setEndDate(LocalDate.of(2025, 1, 2));
+        future.setVehicle(sampleVehicle);
+        future.setTotalCost(BigDecimal.ZERO);
 
-        // findByStartDateAfter liefert nur rNew
         when(rentalRepository.findByStartDateAfter(LocalDate.of(2024, 6, 1)))
-                .thenReturn(List.of(rNew));
-
-        // Mock deleteAll: nichts tun
+                .thenReturn(List.of(future));
         doNothing().when(rentalRepository).deleteAll(anyList());
 
-        // Service‐Aufruf
         rentalService.deleteByStartDateAfter(LocalDate.of(2024, 6, 1));
 
-        // Verifiziere, dass deleteAll(...) mit genau einer Liste [rNew] aufgerufen wurde
-        verify(rentalRepository, times(1))
-                .deleteAll(argThat((Iterable<Rental> iterable) -> {
-                    // Iterable in List umwandeln
-                    java.util.List<Rental> tmp = new java.util.ArrayList<>();
-                    iterable.forEach(tmp::add);
-                    // Prüfen: genau 1 Element und dieses hat ID=2
-                    return tmp.size() == 1 && tmp.get(0).getId().equals(2L);
-                }));
+        ArgumentCaptor<Iterable<Rental>> captor = ArgumentCaptor.forClass(Iterable.class);
+        verify(rentalRepository, times(1)).deleteAll(captor.capture());
+        List<Rental> deleted = List.copyOf((Collection<? extends Rental>) captor.getValue());
+        assertThat(deleted).hasSize(1).extracting(Rental::getId).containsExactly(2L);
     }
+
+    @Test
+    @DisplayName("deleteByStartDateAfter ohne gefundene Rentals ruft deleteAll mit leerer Liste")
+    void deleteByStartDateAfter_noMatches_deletesNothing() {
+        when(rentalRepository.findByStartDateAfter(LocalDate.of(2030, 1, 1)))
+                .thenReturn(Collections.emptyList());
+        doNothing().when(rentalRepository).deleteAll(anyList());
+
+        rentalService.deleteByStartDateAfter(LocalDate.of(2030, 1, 1));
+
+        ArgumentCaptor<Iterable<Rental>> captor = ArgumentCaptor.forClass(Iterable.class);
+        verify(rentalRepository, times(1)).deleteAll(captor.capture());
+        List<Rental> deleted = List.copyOf((Collection<? extends Rental>) captor.getValue());
+        assertThat(deleted).isEmpty();
+    }
+
+    @Test
+    @DisplayName("createAll mit gültigen Rentals speichert alle korrekt")
+    void whenCreateAll_validRentals_thenCalculateTotalCostAndSaveAll() {
+        Rental r1 = new Rental();
+        r1.setCustomer("Klaus");
+        r1.setStartDate(LocalDate.of(2025, 9, 1));
+        r1.setEndDate(LocalDate.of(2025, 9, 3));
+        r1.setVehicle(sampleVehicle);
+
+        Rental r2 = new Rental();
+        r2.setCustomer("Lisa");
+        r2.setStartDate(LocalDate.of(2025, 10, 1));
+        r2.setEndDate(LocalDate.of(2025, 10, 1));
+        r2.setVehicle(anotherVehicle);
+
+        when(vehicleRepository.findById(sampleVehicle.getId())).thenReturn(Optional.of(sampleVehicle));
+        when(vehicleRepository.findById(anotherVehicle.getId())).thenReturn(Optional.of(anotherVehicle));
+        when(rentalRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<Rental> rentals = List.of(r1, r2);
+
+        List<Rental> savedRentals = rentalService.createAll(rentals);
+
+        assertThat(savedRentals).hasSize(2);
+        assertThat(savedRentals.get(0).getTotalCost())
+                .isEqualByComparingTo(sampleVehicle.getPricePerDay().multiply(BigDecimal.valueOf(3)));
+        assertThat(savedRentals.get(1).getTotalCost())
+                .isEqualByComparingTo(anotherVehicle.getPricePerDay().multiply(BigDecimal.valueOf(1)));
+
+        verify(vehicleRepository, times(1)).findById(sampleVehicle.getId());
+        verify(vehicleRepository, times(1)).findById(anotherVehicle.getId());
+        verify(rentalRepository, times(1)).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("createAll mit ungültigen Daten wirft IllegalArgumentException")
+    void whenCreateAll_invalidDates_thenThrowIllegalArgumentException() {
+        Rental r = new Rental();
+        r.setCustomer("Invalid");
+        r.setStartDate(LocalDate.of(2025, 10, 10));
+        r.setEndDate(LocalDate.of(2025, 10, 5)); // Start > Ende
+        r.setVehicle(sampleVehicle);
+
+        when(vehicleRepository.findById(sampleVehicle.getId())).thenReturn(Optional.of(sampleVehicle));
+
+        List<Rental> rentals = List.of(r);
+
+        assertThatThrownBy(() -> rentalService.createAll(rentals))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Startdatum darf nicht nach dem Enddatum liegen");
+
+        verify(rentalRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("createAll mit fehlendem Fahrzeug wirft ResourceNotFoundException")
+    void whenCreateAll_vehicleNotFound_thenThrowResourceNotFoundException() {
+        Rental r = new Rental();
+        r.setCustomer("NoVehicle");
+        r.setStartDate(LocalDate.of(2025, 11, 1));
+        r.setEndDate(LocalDate.of(2025, 11, 2));
+        Vehicle missing = new Vehicle();
+        missing.setId(99L);
+        r.setVehicle(missing);
+
+        when(vehicleRepository.findById(99L)).thenReturn(Optional.empty());
+
+        List<Rental> rentals = List.of(r);
+
+        assertThatThrownBy(() -> rentalService.createAll(rentals))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Vehicle");
+
+        verify(rentalRepository, never()).saveAll(anyList());
+    }
+
 }

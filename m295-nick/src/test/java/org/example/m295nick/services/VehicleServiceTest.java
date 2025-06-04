@@ -193,6 +193,96 @@ class VehicleServiceTest {
                 }));
     }
 
+    @Test
+    @DisplayName("existsById gibt true zurück, wenn Vehicle existiert")
+    void whenExistsById_existing_thenTrue() {
+        when(vehicleRepository.existsById(1L)).thenReturn(true);
+
+        boolean exists = vehicleService.existsById(1L);
+
+        assertThat(exists).isTrue();
+        verify(vehicleRepository, times(1)).existsById(1L);
+    }
+
+    @Test
+    @DisplayName("existsById gibt false zurück, wenn Vehicle nicht existiert")
+    void whenExistsById_nonExisting_thenFalse() {
+        when(vehicleRepository.existsById(99L)).thenReturn(false);
+
+        boolean exists = vehicleService.existsById(99L);
+
+        assertThat(exists).isFalse();
+        verify(vehicleRepository, times(1)).existsById(99L);
+    }
+
+    @Test
+    @DisplayName("getAll liefert Liste aller Fahrzeuge")
+    void whenGetAll_thenReturnList() {
+        List<Vehicle> list = List.of(sampleVehicle);
+        when(vehicleRepository.findAll()).thenReturn(list);
+
+        List<Vehicle> result = vehicleService.getAll();
+
+        assertThat(result).isEqualTo(list);
+        verify(vehicleRepository, times(1)).findAll();
+    }
+
+    @Test
+    @DisplayName("getByAirConditioning filtert Fahrzeuge korrekt")
+    void whenGetByAirConditioning_thenReturnFilteredList() {
+        List<Vehicle> acVehicles = List.of(sampleVehicle);
+        when(vehicleRepository.findByHasAirConditioning(true)).thenReturn(acVehicles);
+
+        List<Vehicle> result = vehicleService.getByAirConditioning(true);
+
+        assertThat(result).isEqualTo(acVehicles);
+        verify(vehicleRepository, times(1)).findByHasAirConditioning(true);
+    }
+
+    @Test
+    @DisplayName("getByBrand filtert Fahrzeuge nach Markenname")
+    void whenGetByBrand_thenReturnFilteredList() {
+        List<Vehicle> brandVehicles = List.of(sampleVehicle);
+        when(vehicleRepository.findByBrandContainingIgnoreCase("vw")).thenReturn(brandVehicles);
+
+        List<Vehicle> result = vehicleService.getByBrand("vw");
+
+        assertThat(result).isEqualTo(brandVehicles);
+        verify(vehicleRepository, times(1)).findByBrandContainingIgnoreCase("vw");
+    }
+
+    @Test
+    @DisplayName("createAll mit gültigen Fahrzeugen speichert alle")
+    void whenCreateAll_validVehicles_thenSaveAll() {
+        Vehicle v1 = createVehicle("Ford", LocalDate.now().minusYears(5));
+        Vehicle v2 = createVehicle("Toyota", LocalDate.now().minusYears(10));
+
+        List<Vehicle> vehicles = List.of(v1, v2);
+
+        when(vehicleRepository.saveAll(vehicles)).thenReturn(vehicles);
+
+        List<Vehicle> saved = vehicleService.createAll(vehicles);
+
+        assertThat(saved).isEqualTo(vehicles);
+        verify(vehicleRepository, times(1)).saveAll(vehicles);
+    }
+
+    @Test
+    @DisplayName("createAll mit mindestens einem alten Fahrzeug wirft IllegalArgumentException")
+    void whenCreateAll_withOldVehicle_thenThrowIllegalArgumentException() {
+        Vehicle v1 = createVehicle("OldCar", LocalDate.now().minusYears(31));
+        Vehicle v2 = createVehicle("NewCar", LocalDate.now().minusYears(10));
+
+        List<Vehicle> vehicles = List.of(v1, v2);
+
+        assertThatThrownBy(() -> vehicleService.createAll(vehicles))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Mindestens ein Fahrzeug ist älter als 30 Jahre");
+
+        verify(vehicleRepository, never()).saveAll(anyList());
+    }
+
+
     // Hilfsmethode, um ein Fahrzeug einfach zu erzeugen
     private Vehicle createVehicle(String brand, LocalDate date) {
         Vehicle v = new Vehicle();

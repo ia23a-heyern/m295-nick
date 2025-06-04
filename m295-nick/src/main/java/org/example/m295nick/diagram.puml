@@ -1,0 +1,29 @@
+@startuml
+
+' Definition der Klasse Vehicle
+class Vehicle {
+    + id                   : BIGINT  <<PK>>
+    --
+    + brand                : VARCHAR(255)
+    + first_registration   : DATE
+    + has_air_conditioning : BIT(1)
+    + model                : VARCHAR(255)
+    + price_per_day        : DOUBLE
+    + seats                : INT
+}
+
+' Definition der Klasse Rental
+class Rental {
+    + id          : BIGINT  <<PK>>
+    --
+    + customer    : VARCHAR(255)
+    + end_date    : DATE
+    + start_date  : DATE
+    + total_cost  : DOUBLE
+    + vehicle_id  : BIGINT  <<FK>>
+}
+
+' Assoziation: Ein Vehicle kann in mehreren Rentals vorkommen
+Vehicle "1" <-- "0.*" Rental : uses
+
+@enduml
