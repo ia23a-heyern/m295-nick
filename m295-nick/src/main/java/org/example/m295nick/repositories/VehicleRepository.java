@@ -2,13 +2,12 @@ package org.example.m295nick.repositories;
 
 import org.example.m295nick.models.Vehicle;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
+@Repository
 public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
-
-    // 1) Lese nach Boolean‐Feld
     List<Vehicle> findByHasAirConditioning(Boolean hasAirConditioning);
-
-    // 2) Lese nach Text‐Feld (Teilstring‐Suche auf brand)
-    List<Vehicle> findByBrandContainingIgnoreCase(String brandPart);
+    List<Vehicle> findByBrandContainingIgnoreCase(String brand);
 }

@@ -26,6 +26,13 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <version>${spring-security.version}</version>  <!-- z.B. 6.5.0 passend zu eurer Spring-Security-Version -->
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>

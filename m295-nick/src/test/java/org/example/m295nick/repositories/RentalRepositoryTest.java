@@ -38,37 +38,38 @@ class RentalRepositoryTest {
         r.setCustomer("Tester");
         r.setStartDate(start);
         r.setEndDate(end);
-        // totalCost wird nicht benötigt, denn wir speichern manuell:
-        r.setTotalCost(BigDecimal.ZERO);
+        r.setTotalCost(new BigDecimal("10.00"));
         r.setVehicle(v);
         return r;
     }
 
     @Test
-    @DisplayName("findByStartDateAfter should return only rentals after given start date")
+    @DisplayName("findByStartDateAfter should return only rentals after now")
     void findByStartDateAfter_filtersCorrectly() {
         Vehicle v = createVehicle();
-        Rental r1 = createRental(v, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 3));
-        Rental r2 = createRental(v, LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 5));
+        LocalDate now = LocalDate.now();
+        Rental r1 = createRental(v, now.plusDays(1), now.plusDays(3));
+        Rental r2 = createRental(v, now.minusDays(10), now.minusDays(5));
         rentalRepository.save(r1);
         rentalRepository.save(r2);
 
-        List<Rental> result = rentalRepository.findByStartDateAfter(LocalDate.of(2024, 12, 31));
+        List<Rental> result = rentalRepository.findByStartDateAfter(now);
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getStartDate()).isEqualTo(LocalDate.of(2025, 1, 1));
+        assertThat(result.get(0).getStartDate()).isEqualTo(now.plusDays(1));
     }
 
     @Test
-    @DisplayName("findByEndDateBefore should return only rentals ending before given end date")
+    @DisplayName("findByEndDateBefore should return only rentals ending before now")
     void findByEndDateBefore_filtersCorrectly() {
         Vehicle v = createVehicle();
-        Rental r1 = createRental(v, LocalDate.of(2023, 1, 1), LocalDate.of(2023, 1, 5));
-        Rental r2 = createRental(v, LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 10));
+        LocalDate now = LocalDate.now();
+        Rental r1 = createRental(v, now.minusDays(10), now.minusDays(1));
+        Rental r2 = createRental(v, now.plusDays(1), now.plusDays(5));
         rentalRepository.save(r1);
         rentalRepository.save(r2);
 
-        List<Rental> result = rentalRepository.findByEndDateBefore(LocalDate.of(2023, 6, 1));
+        List<Rental> result = rentalRepository.findByEndDateBefore(now);
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getEndDate()).isEqualTo(LocalDate.of(2023, 1, 5));
+        assertThat(result.get(0).getEndDate()).isEqualTo(now.minusDays(1));
     }
 }
