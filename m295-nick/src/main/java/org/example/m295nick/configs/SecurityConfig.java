@@ -2,17 +2,18 @@ package org.example.m295nick.configs;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Configuration
-@EnableMethodSecurity // Damit @PreAuthorize in den Controllern greift
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -21,44 +22,41 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        var user = User.withUsername("user")
-                .password(encoder.encode("userpass"))
-                .roles("USER")   // Rolle USER
+    public InMemoryUserDetailsManager userDetailsService(PasswordEncoder encoder) {
+        UserDetails admin = User.withUsername("admin")
+                .password(encoder.encode("adminPass"))
+                .roles("ADMIN")
                 .build();
 
-        var admin = User.withUsername("admin")
-                .password(encoder.encode("adminpass"))
-                .roles("ADMIN")  // Rolle ADMIN
+        UserDetails user = User.withUsername("user")
+                .password(encoder.encode("userPass"))
+                .roles("USER")
                 .build();
 
-        return new InMemoryUserDetailsManager(user, admin);
+        return new InMemoryUserDetailsManager(admin, user);
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // a) CSRF ausschalten (REST-API)
-                .csrf(csrf -> csrf.disable())
-                // b) URL-Zugriffsregeln
+                .csrf().disable() // Bei reiner REST‐API in der Regel deaktiviert
                 .authorizeHttpRequests(auth -> auth
-                        // Swagger-UI & OpenAPI-Docs dürfen ohne Login geladen werden
-                        .requestMatchers(
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/api-docs/**"
-                        ).permitAll()
-                        // Alle anderen /api/** Endpunkte erfordern Authentifizierung
-                        .requestMatchers("/api/**").authenticated()
-                        // Falls Du z.B. eine H2-Konsole o.Ä. benutzt, musst Du die URL hier auch ggf. erlauben:
-                        // .requestMatchers("/h2-console/**").permitAll()
-                        // Alle sonstigen URLs ebenfalls geschützt
+                        // Swagger & OpenAPI öffentlich:
+                        .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        // VEHICLE:
+                        .requestMatchers(HttpMethod.POST, "/api/v1/vehicles/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/vehicles/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/vehicles/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/**").hasAnyRole("ADMIN","USER")
+                        // RENTAL:
+                        .requestMatchers(HttpMethod.POST, "/api/v1/rentals/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/rentals/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/rentals/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/rentals/**").hasAnyRole("ADMIN","USER")
+                        // Alle anderen Anfragen erfordern Authentifizierung
                         .anyRequest().authenticated()
                 )
-                // c) HTTP Basic Auth aktivieren
-                .httpBasic();
-
+                .httpBasic(); // HTTP‐Basic Authentifizierung
         return http.build();
     }
 }

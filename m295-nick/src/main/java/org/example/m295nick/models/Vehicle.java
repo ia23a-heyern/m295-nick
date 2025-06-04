@@ -1,44 +1,143 @@
 package org.example.m295nick.models;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "vehicle")
 public class Vehicle {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Brand must not be blank")
-    @Size(min = 2, max = 100, message = "Brand length must be between 2 and 100")
+    // TEXT‐Feld: Marke (Pflichtfeld, max. 50 Zeichen)
+    @NotBlank(message = "Die Marke darf nicht leer sein")
+    @Size(max = 50, message = "Die Marke darf maximal 50 Zeichen lang sein")
+    @Column(nullable = false, length = 50)
     private String brand;
 
-    @NotBlank(message = "Model must not be blank")
-    @Size(min = 1, max = 100, message = "Model length must be between 1 and 100")
+    // TEXT‐Feld: Model (Pflichtfeld, max. 50 Zeichen)
+    @NotBlank(message = "Das Modell darf nicht leer sein")
+    @Size(max = 50, message = "Das Modell darf maximal 50 Zeichen lang sein")
+    @Column(nullable = false, length = 50)
     private String model;
 
-    @Positive(message = "Price per day must be greater than zero")
-    private double pricePerDay;
-
-    @NotNull(message = "First registration date is required")
-    @PastOrPresent(message = "First registration date cannot be in the future")
+    // DATUM‐Feld: Erstzulassung (Pflichtfeld, darf nicht in der Zukunft liegen)
+    @NotNull(message = "Erstzulassung ist Pflicht")
+    @PastOrPresent(message = "Erstzulassung darf nicht in der Zukunft liegen")
+    @Column(name = "first_registration", nullable = false)
     private LocalDate firstRegistration;
 
-    @Min(value = 1, message = "Seats must be at least 1")
-    private int seats;
+    // BOOLEAN‐Feld: hat Klimaanlage
+    @NotNull(message = "Angabe zur Klimaanlage ist Pflicht")
+    @Column(name = "has_air_conditioning", nullable = false)
+    private Boolean hasAirConditioning;
 
-    private boolean hasAirConditioning;
+    // BIGDECIMAL‐Feld: Preis pro Tag (Pflicht, positiv, max. 6 Stellen vor dem Komma + 2 Nachkommastellen)
+    @NotNull(message = "Preis pro Tag ist Pflicht")
+    @Positive(message = "Preis pro Tag muss positiv sein")
+    @Digits(integer = 6, fraction = 2, message = "Preis pro Tag darf maximal 6 Stellen vor dem Komma und 2 Nachkommastellen haben")
+    @Column(
+            name = "price_per_day",
+            nullable = false,
+            precision = 8,    // insgesamt 8 Stellen (6+2)
+            scale = 2         // davon 2 Nachkommastellen
+    )
+    private BigDecimal pricePerDay;
 
+    // INT‐Feld: Sitzplätze (Pflicht, Minimum 1, Maximum 9)
+    @NotNull(message = "Anzahl der Sitzplätze ist Pflicht")
+    @Min(value = 1, message = "Mindestens 1 Sitzplatz erforderlich")
+    @Max(value = 9, message = "Maximal 9 Sitzplätze zulässig")
+    @Column(nullable = false)
+    private Integer seats;
+
+    // Eine bidirektionale 1‐n Beziehung: ein Vehicle kann in vielen Rentals gemietet werden
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<Rental> rentals;
+    private List<Rental> rentals = new ArrayList<>();
 
-    // Getter, Setter, Konstruktoren wie bisher...
-    public Vehicle() {}
-    // ... andere Konstruktoren und Getter/Setter ...
-    // (aus Platzgründen weggelassen, wenn gewünscht liefere ich den kompletten Boilerplate nach)
+    public Vehicle() {
+    }
+
+    // ————————— Getter / Setter —————————
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public LocalDate getFirstRegistration() {
+        return firstRegistration;
+    }
+
+    public void setFirstRegistration(LocalDate firstRegistration) {
+        this.firstRegistration = firstRegistration;
+    }
+
+    public Boolean getHasAirConditioning() {
+        return hasAirConditioning;
+    }
+
+    public void setHasAirConditioning(Boolean hasAirConditioning) {
+        this.hasAirConditioning = hasAirConditioning;
+    }
+
+    public BigDecimal getPricePerDay() {
+        return pricePerDay;
+    }
+
+    public void setPricePerDay(BigDecimal pricePerDay) {
+        this.pricePerDay = pricePerDay;
+    }
+
+    public Integer getSeats() {
+        return seats;
+    }
+
+    public void setSeats(Integer seats) {
+        this.seats = seats;
+    }
+
+    public List<Rental> getRentals() {
+        return rentals;
+    }
+
+    public void setRentals(List<Rental> rentals) {
+        this.rentals = rentals;
+    }
+
+    // Hilfsmethode, um bi‐directional zu verknüpfen
+    public void addRental(Rental rental) {
+        rentals.add(rental);
+        rental.setVehicle(this);
+    }
+
+    public void removeRental(Rental rental) {
+        rentals.remove(rental);
+        rental.setVehicle(null);
+    }
 }
