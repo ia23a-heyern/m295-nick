@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -26,6 +27,7 @@ public class VehicleController {
 
     /** 1) GET /api/v1/vehicles/{id} → Fahrzeug nach ID lesen */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<Vehicle> getVehicleById(@PathVariable Long id) {
         Vehicle vehicle = vehicleService.getById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", "id", id));
@@ -34,6 +36,7 @@ public class VehicleController {
 
     /** 2) HEAD /api/v1/vehicles/{id} → Existenz prüfen */
     @RequestMapping(value = "/{id}", method = RequestMethod.HEAD)
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<Void> existsById(@PathVariable Long id) {
         boolean exists = vehicleService.existsById(id);
         return exists ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
@@ -41,6 +44,7 @@ public class VehicleController {
 
     /** 3) GET /api/v1/vehicles → Alle Fahrzeuge lesen */
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<Vehicle>> getAllVehicles() {
         List<Vehicle> alle = vehicleService.getAll();
         return ResponseEntity.ok(alle);
@@ -48,6 +52,7 @@ public class VehicleController {
 
     /** 4) GET /api/v1/vehicles/filter/air-conditioning?enabled=true */
     @GetMapping("/filter/air-conditioning")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<Vehicle>> getByAirConditioning(@RequestParam Boolean enabled) {
         List<Vehicle> filtered = vehicleService.getByAirConditioning(enabled);
         return ResponseEntity.ok(filtered);
@@ -55,6 +60,7 @@ public class VehicleController {
 
     /** 5) GET /api/v1/vehicles/filter/brand?brand=VW */
     @GetMapping("/filter/brand")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<Vehicle>> getByBrand(@RequestParam String brand) {
         List<Vehicle> filtered = vehicleService.getByBrand(brand);
         return ResponseEntity.ok(filtered);
@@ -64,6 +70,7 @@ public class VehicleController {
 
     /** 6) POST /api/v1/vehicles → Ein Fahrzeug anlegen */
     @PostMapping(consumes = "application/json")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Vehicle> createVehicle(@Valid @RequestBody Vehicle vehicle) {
         Vehicle created = vehicleService.create(vehicle);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
@@ -71,6 +78,7 @@ public class VehicleController {
 
     /** 7) POST /api/v1/vehicles/bulk → Mehrere Fahrzeuge anlegen */
     @PostMapping(path = "/bulk", consumes = "application/json")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Vehicle>> createVehiclesBulk(@Valid @RequestBody List<Vehicle> vehicles) {
         List<Vehicle> createdList = vehicleService.createAll(vehicles);
         return new ResponseEntity<>(createdList, HttpStatus.CREATED);
@@ -80,6 +88,7 @@ public class VehicleController {
 
     /** 8) PUT /api/v1/vehicles/{id} → Fahrzeug updaten */
     @PutMapping(path = "/{id}", consumes = "application/json")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Vehicle> updateVehicle(
             @PathVariable Long id,
             @Valid @RequestBody Vehicle vehicleRequest) {
@@ -92,6 +101,7 @@ public class VehicleController {
 
     /** 9) DELETE /api/v1/vehicles/{id} → Fahrzeug nach ID löschen */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteVehicleById(@PathVariable Long id) {
         vehicleService.deleteById(id);
         return ResponseEntity.noContent().build();
@@ -99,6 +109,7 @@ public class VehicleController {
 
     /** 10) DELETE /api/v1/vehicles/filter/first-registration?before=2020-01-01 */
     @DeleteMapping("/filter/first-registration")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteVehiclesByFirstRegistrationBefore(
             @RequestParam("before") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate beforeDate) {
         vehicleService.deleteByFirstRegistrationBefore(beforeDate);
@@ -107,6 +118,7 @@ public class VehicleController {
 
     /** 11) DELETE /api/v1/vehicles → Alle Fahrzeuge löschen */
     @DeleteMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteAllVehicles() {
         vehicleService.deleteAll();
         return ResponseEntity.noContent().build();

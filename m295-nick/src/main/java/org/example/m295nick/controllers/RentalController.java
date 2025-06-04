@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -26,6 +27,7 @@ public class RentalController {
 
     /** GET /api/v1/rentals/{id} → Eine Miete nach ID lesen */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<Rental> getRentalById(@PathVariable Long id) {
         Rental rental = rentalService.getById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", id));
@@ -34,6 +36,7 @@ public class RentalController {
 
     /** HEAD /api/v1/rentals/{id} → Existenz prüfen */
     @RequestMapping(value = "/{id}", method = RequestMethod.HEAD)
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<Void> existsById(@PathVariable Long id) {
         boolean exists = rentalService.existsById(id);
         return exists ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
@@ -41,6 +44,7 @@ public class RentalController {
 
     /** GET /api/v1/rentals → Alle Rentals lesen */
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<Rental>> getAllRentals() {
         List<Rental> alle = rentalService.getAll();
         return ResponseEntity.ok(alle);
@@ -48,6 +52,7 @@ public class RentalController {
 
     /** GET /api/v1/rentals/filter/start-after?after=2024-01-01 */
     @GetMapping("/filter/start-after")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<Rental>> getRentalsByStartDateAfter(
             @RequestParam("after") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate afterDate) {
         List<Rental> filtered = rentalService.getByStartDateAfter(afterDate);
@@ -56,6 +61,7 @@ public class RentalController {
 
     /** GET /api/v1/rentals/filter/end-before?before=2024-12-31 */
     @GetMapping("/filter/end-before")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<Rental>> getRentalsByEndDateBefore(
             @RequestParam("before") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate beforeDate) {
         List<Rental> filtered = rentalService.getByEndDateBefore(beforeDate);
@@ -66,6 +72,7 @@ public class RentalController {
 
     /** POST /api/v1/rentals → Eine Miete anlegen */
     @PostMapping(consumes = "application/json")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Rental> createRental(@Valid @RequestBody Rental rental) {
         Rental created = rentalService.create(rental);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
@@ -73,6 +80,7 @@ public class RentalController {
 
     /** POST /api/v1/rentals/bulk → Mehrere Rentals anlegen */
     @PostMapping(path = "/bulk", consumes = "application/json")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Rental>> createRentalsBulk(@Valid @RequestBody List<Rental> rentals) {
         List<Rental> createdList = rentalService.createAll(rentals);
         return new ResponseEntity<>(createdList, HttpStatus.CREATED);
@@ -82,6 +90,7 @@ public class RentalController {
 
     /** PUT /api/v1/rentals/{id} → Eine Miete aktualisieren */
     @PutMapping(path = "/{id}", consumes = "application/json")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Rental> updateRental(
             @PathVariable Long id,
             @Valid @RequestBody Rental rentalRequest) {
@@ -93,6 +102,7 @@ public class RentalController {
 
     /** DELETE /api/v1/rentals/{id} → Miete nach ID löschen */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteRentalById(@PathVariable Long id) {
         rentalService.deleteById(id);
         return ResponseEntity.noContent().build();
@@ -100,6 +110,7 @@ public class RentalController {
 
     /** DELETE /api/v1/rentals/filter/start-after?after=2024-01-01 */
     @DeleteMapping("/filter/start-after")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteRentalsByStartDateAfter(
             @RequestParam("after") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate afterDate) {
         rentalService.deleteByStartDateAfter(afterDate);
@@ -108,6 +119,7 @@ public class RentalController {
 
     /** DELETE /api/v1/rentals → Alle Rentals löschen */
     @DeleteMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteAllRentals() {
         rentalService.deleteAll();
         return ResponseEntity.noContent().build();
