@@ -46,7 +46,6 @@ Das Datenbankschema besteht aus zwei Tabellen mit folgender Struktur:
 | firstRegistration  | nicht null, darf nicht in Zukunft sein |
 | hasAirConditioning  | nicht null                        |
 | pricePerDay        | nicht null, > 0                   |
-| seats              | nicht null, zwischen 1 und 9 inkl.|
 
 ### 3.2 Rental (Mietvorgang)
 
