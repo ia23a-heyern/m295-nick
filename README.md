@@ -230,21 +230,21 @@ externalDocs:
   description: Projekt-Repository
   url: https://github.com/nick‐heyer/autovermietung
 servers:
-  - url: http://localhost:8080
-    description: Generated server url
+- url: http://localhost:8080
+  description: Generated server url
 paths:
   /api/v1/vehicles/{id}:
     get:
       tags:
-        - vehicle-controller
+      - vehicle-controller
       operationId: getVehicleById
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
       responses:
         "200":
           description: OK
@@ -254,15 +254,15 @@ paths:
                 $ref: "#/components/schemas/Vehicle"
     put:
       tags:
-        - vehicle-controller
+      - vehicle-controller
       operationId: updateVehicle
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
       requestBody:
         content:
           application/json:
@@ -278,15 +278,395 @@ paths:
                 $ref: "#/components/schemas/Vehicle"
     delete:
       tags:
-        - vehicle-controller
+      - vehicle-controller
       operationId: deleteVehicleById
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
       responses:
         "200":
           description: OK
+    head:
+      tags:
+      - vehicle-controller
+      operationId: existsById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/v1/rentals/{id}:
+    get:
+      tags:
+      - rental-controller
+      operationId: getRentalById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rental"
+    put:
+      tags:
+      - rental-controller
+      operationId: updateRental
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Rental"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rental"
+    delete:
+      tags:
+      - rental-controller
+      operationId: deleteRentalById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+    head:
+      tags:
+      - rental-controller
+      operationId: existsById_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/v1/vehicles:
+    get:
+      tags:
+      - vehicle-controller
+      operationId: getAllVehicles
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vehicle"
+    post:
+      tags:
+      - vehicle-controller
+      operationId: createVehicle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Vehicle"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+    delete:
+      tags:
+      - vehicle-controller
+      operationId: deleteAllVehicles
+      responses:
+        "200":
+          description: OK
+  /api/v1/vehicles/bulk:
+    post:
+      tags:
+      - vehicle-controller
+      operationId: createVehiclesBulk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Vehicle"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vehicle"
+  /api/v1/rentals:
+    get:
+      tags:
+      - rental-controller
+      operationId: getAllRentals
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Rental"
+    post:
+      tags:
+      - rental-controller
+      operationId: createRental
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Rental"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rental"
+    delete:
+      tags:
+      - rental-controller
+      operationId: deleteAllRentals
+      responses:
+        "200":
+          description: OK
+  /api/v1/rentals/bulk:
+    post:
+      tags:
+      - rental-controller
+      operationId: createRentalsBulk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Rental"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Rental"
+  /api/v1/vehicles/filter/brand:
+    get:
+      tags:
+      - vehicle-controller
+      operationId: getByBrand
+      parameters:
+      - name: brand
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vehicle"
+  /api/v1/vehicles/filter/air-conditioning:
+    get:
+      tags:
+      - vehicle-controller
+      operationId: getByAirConditioning
+      parameters:
+      - name: enabled
+        in: query
+        required: true
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vehicle"
+  /api/v1/rentals/filter/start-after:
+    get:
+      tags:
+      - rental-controller
+      operationId: getRentalsByStartDateAfter
+      parameters:
+      - name: after
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Rental"
+    delete:
+      tags:
+      - rental-controller
+      operationId: deleteRentalsByStartDateAfter
+      parameters:
+      - name: after
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+  /api/v1/rentals/filter/end-before:
+    get:
+      tags:
+      - rental-controller
+      operationId: getRentalsByEndDateBefore
+      parameters:
+      - name: before
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Rental"
+  /api/v1/vehicles/filter/first-registration:
+    delete:
+      tags:
+      - vehicle-controller
+      operationId: deleteVehiclesByFirstRegistrationBefore
+      parameters:
+      - name: before
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    Vehicle:
+      required:
+      - brand
+      - firstRegistration
+      - hasAirConditioning
+      - model
+      - pricePerDay
+      - seats
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        brand:
+          maxLength: 50
+          minLength: 0
+          type: string
+        model:
+          maxLength: 50
+          minLength: 0
+          type: string
+        firstRegistration:
+          type: string
+          format: date
+        hasAirConditioning:
+          type: boolean
+        pricePerDay:
+          type: number
+        seats:
+          maximum: 9
+          minimum: 1
+          type: integer
+          format: int32
+    Rental:
+      required:
+      - customer
+      - endDate
+      - startDate
+      - totalCost
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        customer:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        totalCost:
+          type: number
+        vehicleId:
+          type: integer
+          format: int64
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+

@@ -1,5 +1,6 @@
 package org.example.m295nick.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
@@ -13,39 +14,39 @@ public class Rental {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // TEXT‐Feld: Kundenname
-    @NotBlank(message = "Kundenname darf nicht leer sein")
-    @Size(max = 100, message = "Kundenname darf maximal 100 Zeichen lang sein")
-    @Column(nullable = false, length = 100)
+    @NotBlank(message = "Kunde ist Pflicht")
+    @Column(nullable = false)
     private String customer;
 
-    // DATUM‐Feld: Startdatum (Pflicht, darf nicht in der Vergangenheit liegen)
     @NotNull(message = "Startdatum ist Pflicht")
-    @FutureOrPresent(message = "Mietbeginn darf nicht in der Vergangenheit liegen")
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
-    // DATUM‐Feld: Enddatum (Pflicht, muss in der Zukunft liegen)
     @NotNull(message = "Enddatum ist Pflicht")
-    @Future(message = "Mietende muss in der Zukunft liegen")
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    // BIGDECIMAL‐Feld: Gesamtkosten (Pflicht, positiv, wird im Service berechnet)
     @NotNull(message = "Gesamtkosten sind Pflicht")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Gesamtkosten müssen positiv sein")
-    @Column(name = "total_cost", nullable = false, precision = 10, scale = 2)
+    @PositiveOrZero(message = "Gesamtkosten müssen positiv oder 0 sein")
+    @Column(name = "total_cost", nullable = false)
     private BigDecimal totalCost;
 
-    // Verknüpfung zum Vehicle – jedes Rental gehört genau zu einem Vehicle
+    // Fahrzeug-Relation (viele Rentals können ein Vehicle haben)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id", nullable = false)
+    @JsonIgnore // verhindert zyklische Serialisierung / JSON-Ausgabe
     private Vehicle vehicle;
+
+    // Hilfsfeld: Fahrzeug-ID für JSON-Ein-/Ausgabe (nicht in DB gespeichert)
+    @Transient
+    private Long vehicleId;
+
+    // --- Konstruktor ---
 
     public Rental() {
     }
 
-    // ————————— Getter / Setter —————————
+    // --- Getter / Setter ---
 
     public Long getId() {
         return id;
@@ -93,5 +94,17 @@ public class Rental {
 
     public void setVehicle(Vehicle vehicle) {
         this.vehicle = vehicle;
+    }
+
+    // vehicleId für JSON-Serialisierung und Deserialisierung
+    public Long getVehicleId() {
+        if (vehicle != null) {
+            return vehicle.getId();
+        }
+        return vehicleId;
+    }
+
+    public void setVehicleId(Long vehicleId) {
+        this.vehicleId = vehicleId;
     }
 }

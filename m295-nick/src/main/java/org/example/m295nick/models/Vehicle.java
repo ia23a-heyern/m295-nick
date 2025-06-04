@@ -1,5 +1,6 @@
 package org.example.m295nick.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
@@ -15,56 +16,51 @@ public class Vehicle {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // TEXT‐Feld: Marke (Pflichtfeld, max. 50 Zeichen)
     @NotBlank(message = "Die Marke darf nicht leer sein")
     @Size(max = 50, message = "Die Marke darf maximal 50 Zeichen lang sein")
     @Column(nullable = false, length = 50)
     private String brand;
 
-    // TEXT‐Feld: Model (Pflichtfeld, max. 50 Zeichen)
     @NotBlank(message = "Das Modell darf nicht leer sein")
     @Size(max = 50, message = "Das Modell darf maximal 50 Zeichen lang sein")
     @Column(nullable = false, length = 50)
     private String model;
 
-    // DATUM‐Feld: Erstzulassung (Pflichtfeld, darf nicht in der Zukunft liegen)
     @NotNull(message = "Erstzulassung ist Pflicht")
     @PastOrPresent(message = "Erstzulassung darf nicht in der Zukunft liegen")
     @Column(name = "first_registration", nullable = false)
     private LocalDate firstRegistration;
 
-    // BOOLEAN‐Feld: hat Klimaanlage
     @NotNull(message = "Angabe zur Klimaanlage ist Pflicht")
     @Column(name = "has_air_conditioning", nullable = false)
     private Boolean hasAirConditioning;
 
-    // BIGDECIMAL‐Feld: Preis pro Tag (Pflicht, positiv, max. 6 Stellen vor dem Komma + 2 Nachkommastellen)
     @NotNull(message = "Preis pro Tag ist Pflicht")
     @Positive(message = "Preis pro Tag muss positiv sein")
     @Digits(integer = 6, fraction = 2, message = "Preis pro Tag darf maximal 6 Stellen vor dem Komma und 2 Nachkommastellen haben")
     @Column(
             name = "price_per_day",
             nullable = false,
-            precision = 8,    // insgesamt 8 Stellen (6+2)
-            scale = 2         // davon 2 Nachkommastellen
+            precision = 8,  // 6 Stellen vor Komma + 2 Nachkommastellen
+            scale = 2
     )
     private BigDecimal pricePerDay;
 
-    // INT‐Feld: Sitzplätze (Pflicht, Minimum 1, Maximum 9)
     @NotNull(message = "Anzahl der Sitzplätze ist Pflicht")
     @Min(value = 1, message = "Mindestens 1 Sitzplatz erforderlich")
     @Max(value = 9, message = "Maximal 9 Sitzplätze zulässig")
     @Column(nullable = false)
     private Integer seats;
 
-    // Eine bidirektionale 1‐n Beziehung: ein Vehicle kann in vielen Rentals gemietet werden
+    // 1:n Beziehung zu Rentals, aber beim JSON ignorieren, damit Rentals nicht mitgegeben werden müssen
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Rental> rentals = new ArrayList<>();
 
     public Vehicle() {
     }
 
-    // ————————— Getter / Setter —————————
+    // Getter und Setter
 
     public Long getId() {
         return id;
@@ -130,7 +126,8 @@ public class Vehicle {
         this.rentals = rentals;
     }
 
-    // Hilfsmethode, um bi‐directional zu verknüpfen
+    // Hilfsmethoden für bi-direktionale Beziehung
+
     public void addRental(Rental rental) {
         rentals.add(rental);
         rental.setVehicle(this);
