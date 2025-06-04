@@ -70,7 +70,6 @@ Das Datenbankschema besteht aus zwei Tabellen mit folgender Struktur:
 | /api/v1/vehicles/{id}         | DELETE       | Nein               | Ja                  |
 | /api/v1/vehicles/filter/ac    | GET          | Ja                 | Ja                  |
 | /api/v1/vehicles/filter/brand | GET          | Ja                 | Ja                  |
-| /api/v1/vehicles/filter/seats | GET          | Ja                 | Ja                  |
 
 | Endpoint                       | HTTP-Methode | Rolle USER erlaubt? | Rolle ADMIN erlaubt? |
 |-------------------------------|--------------|--------------------|---------------------|
